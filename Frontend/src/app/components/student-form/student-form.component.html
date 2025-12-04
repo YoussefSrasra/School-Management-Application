@@ -1,0 +1,45 @@
+<div class="modal d-block" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">{{ isEditMode ? 'Edit Student' : 'Add New Student' }}</h5>
+        <button type="button" class="btn-close" (click)="cancel()"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <div *ngIf="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+        <form (ngSubmit)="save()">
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="student.username"
+              name="username"
+              required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Level</label>
+            <select class="form-select" [(ngModel)]="student.level" name="level" required>
+              <option *ngFor="let lvl of levels" [value]="lvl">{{ lvl }}</option>
+            </select>
+          </div>
+
+          <!-- Footer moved inside form to allow submit on Enter -->
+          <div class="modal-footer px-0 pb-0">
+            <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+              {{ isLoading ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
