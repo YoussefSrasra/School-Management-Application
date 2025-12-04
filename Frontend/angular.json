@@ -56,12 +56,8 @@
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "node_modules/bootstrap-icons/font/bootstrap-icons.css"
             ],
-            "scripts": [],
-            "server": "src/main.server.ts",
-            "outputMode": "server",
-            "ssr": {
-              "entry": "src/server.ts"
-            }
+            "scripts": []
+            // The 'server', 'outputMode', and 'ssr' options have been removed here
           },
           "configurations": {
             "production": {
@@ -124,5 +120,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": "15d93f1a-3218-488a-b2d9-20858087839b"
   }
 }
