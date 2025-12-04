@@ -50,4 +50,15 @@ export class StudentService {
       .set('size', size);
     return this.http.get<Page<Student>>(`${this.apiUrl}/filter`, { params });
   }
+
+  exportStudents(): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/export`, { responseType: 'blob' });
+  }
+
+  // 2. Import: Sends a File
+  importStudents(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/import`, formData);
+  }
 }

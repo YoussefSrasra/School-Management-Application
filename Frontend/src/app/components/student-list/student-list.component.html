@@ -8,6 +8,7 @@
 <div class="container">
 
   <div class="row mb-4 g-3 align-items-center">
+    <!-- Search Input -->
     <div class="col-md-4">
       <input
         type="text"
@@ -16,16 +17,29 @@
         [(ngModel)]="searchQuery"
         (keyup.enter)="onSearch()">
     </div>
+
     <div class="col-md-3">
       <select class="form-select" [(ngModel)]="selectedLevel" (change)="onFilterChange()">
         <option value="">Filter by Level (All)</option>
         <option *ngFor="let level of levels" [value]="level">{{ level }}</option>
       </select>
     </div>
+
     <div class="col-md-5 text-end">
+      <input type="file" #fileInput style="display: none" (change)="onFileSelected($event)" accept=".csv">
+
+      <button class="btn btn-outline-success me-2" (click)="downloadCsv()" title="Download CSV">
+        <i class="bi bi-download"></i>
+      </button>
+
+      <button class="btn btn-outline-warning me-2" (click)="fileInput.click()" title="Upload CSV">
+        <i class="bi bi-upload"></i>
+      </button>
+
       <button class="btn btn-primary me-2" (click)="onSearch()">Search</button>
+
       <button class="btn btn-success" (click)="openCreateModal()">
-        <i class="bi bi-plus-lg"></i> Add Student
+        <i class="bi bi-plus-lg"></i> Add
       </button>
     </div>
   </div>
@@ -50,6 +64,7 @@
             <button class="btn btn-sm btn-outline-primary me-2" (click)="openEditModal(student)">
               <i class="bi bi-pencil"></i> Edit
             </button>
+
             <button class="btn btn-sm btn-outline-danger" (click)="deleteStudent(student.id)">
               <i class="bi bi-trash"></i> Delete
             </button>
@@ -63,6 +78,7 @@
     </div>
   </div>
 
+  <!-- Pagination -->
   <div class="d-flex justify-content-between align-items-center mt-3" *ngIf="totalPages > 1">
     <span class="text-muted">Showing page {{ currentPage + 1 }} of {{ totalPages }}</span>
     <nav>
@@ -77,7 +93,6 @@
     </nav>
   </div>
 
-  <!-- 1. STUDENT FORM MODAL -->
   <app-student-form
     *ngIf="showModal"
     [student]="selectedStudent"
@@ -86,7 +101,6 @@
     (refreshList)="onFormSaved()">
   </app-student-form>
 
-  <!-- 2. DELETE CONFIRMATION MODAL (NEW) -->
   <app-confirmation-modal
     *ngIf="showDeleteModal"
     title="Delete Student"
@@ -94,5 +108,13 @@
     (confirm)="confirmDelete()"
     (cancel)="closeDeleteModal()">
   </app-confirmation-modal>
+
+  <app-message-modal
+    *ngIf="showMessageModal"
+    [title]="messageTitle"
+    [message]="messageBody"
+    [isError]="isMessageError"
+    (close)="closeMessageModal()">
+  </app-message-modal>
 
 </div>

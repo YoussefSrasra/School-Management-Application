@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import tn.school.management.dto.StudentDto;
 import tn.school.management.entity.Level;
 import tn.school.management.entity.Student;
@@ -11,6 +12,12 @@ import tn.school.management.exception.ResourceNotFoundException;
 import tn.school.management.mapper.StudentMapper;
 import tn.school.management.repository.StudentRepository;
 import tn.school.management.service.StudentService;
+import tn.school.management.util.CsvHelper;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,11 +54,9 @@ public class StudentServiceImpl implements StudentService {
         Student existingStudent = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
 
-        // Update fields
         existingStudent.setUsername(studentDto.getUsername());
         existingStudent.setLevel(studentDto.getLevel());
-        
-        // Save
+
         Student updatedStudent = studentRepository.save(existingStudent);
         return studentMapper.toDto(updatedStudent);
     }
@@ -74,5 +79,32 @@ public class StudentServiceImpl implements StudentService {
     public Page<StudentDto> filterStudentsByLevel(Level level, Pageable pageable) {
         return studentRepository.findByLevel(level, pageable)
                 .map(studentMapper::toDto);
+    }
+
+
+    @Override
+    public InputStream exportStudents() {
+        List<Student> students = studentRepository.findAll();
+        List<StudentDto> dtos = students.stream().map(studentMapper::toDto).collect(Collectors.toList());
+
+        return CsvHelper.studentsToCsv(dtos);
+    }
+
+    @Override
+    public void importStudents(MultipartFile file) {
+        if (!CsvHelper.hasCSVFormat(file)) {
+            throw new IllegalArgumentException("Please upload a csv file!");
+        }
+        try {
+            List<Student> students = CsvHelper.csvToStudents(file.getInputStream());
+
+            List<Student> newStudents = students.stream()
+                    .filter(s -> !studentRepository.existsByUsername(s.getUsername()))
+                    .collect(Collectors.toList());
+
+            studentRepository.saveAll(newStudents);
+        } catch (IOException e) {
+            throw new RuntimeException("Fail to store csv data: " + e.getMessage());
+        }
     }
 }

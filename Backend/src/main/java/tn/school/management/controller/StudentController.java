@@ -14,6 +14,17 @@ import org.springframework.web.bind.annotation.*;
 import tn.school.management.dto.StudentDto;
 import tn.school.management.entity.Level;
 import tn.school.management.service.StudentService;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import java.util.Collections;
+import java.util.Map;
+import java.io.InputStream;
+import org.springframework.web.multipart.MultipartFile;
+
+
+
+
 
 @RestController
 @RequestMapping("/api/students")
@@ -71,5 +82,25 @@ public class StudentController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         return ResponseEntity.ok(studentService.filterStudentsByLevel(level, pageable));
+    }
+
+
+    @GetMapping("/export")
+    @Operation(summary = "Export all students to CSV")
+    public ResponseEntity<org.springframework.core.io.Resource> exportStudents() {
+        String filename = "students.csv";
+        InputStreamResource file = new InputStreamResource(studentService.exportStudents());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+                .contentType(MediaType.parseMediaType("application/csv"))
+                .body(file);
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Import students from CSV")
+    public ResponseEntity<Map<String, String>> importStudents(@RequestParam("file") MultipartFile file) {
+        studentService.importStudents(file);
+        return ResponseEntity.ok(Collections.singletonMap("message", "File imported successfully!"));
     }
 }

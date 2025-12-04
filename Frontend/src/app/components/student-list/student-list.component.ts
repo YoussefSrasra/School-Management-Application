@@ -6,12 +6,13 @@ import { Student, Level, Page } from '../../models/types';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 import { StudentFormComponent } from '../student-form/student-form.component';
-import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component'; // Import 1
+import { ConfirmationModalComponent } from '../confirmation-modal/confirmation-modal.component';
+import { MessageModalComponent } from '../message-modal/message-modal.component'; // Import 1
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, StudentFormComponent, ConfirmationModalComponent], // Import 2
+  imports: [CommonModule, FormsModule, StudentFormComponent, ConfirmationModalComponent, MessageModalComponent], // Import 2
   templateUrl: './student-list.component.html',
   styleUrls: ['./student-list.component.css']
 })
@@ -28,14 +29,19 @@ export class StudentListComponent implements OnInit {
   searchQuery: string = '';
   selectedLevel: string = '';
 
-  // Form Modal State
+  // Modal States
   showModal: boolean = false;
   isEditMode: boolean = false;
   selectedStudent: Student = { username: '', level: Level.SEPTIEME };
 
-  // Delete Modal State (NEW)
   showDeleteModal: boolean = false;
   studentIdToDelete: number | null = null;
+
+  // Message Modal State (NEW)
+  showMessageModal: boolean = false;
+  messageTitle: string = '';
+  messageBody: string = '';
+  isMessageError: boolean = false;
 
   constructor(
     private studentService: StudentService,
@@ -66,7 +72,50 @@ export class StudentListComponent implements OnInit {
     this.totalElements = data.totalElements;
   }
 
-  // --- Form Modal Logic ---
+
+  downloadCsv(): void {
+    this.studentService.exportStudents().subscribe({
+      next: (blob) => {
+        // Create a temporary link to trigger the download
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'students.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => this.showMsg('Export Failed', 'Could not download the CSV file.', true)
+    });
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    if (file) {
+      this.studentService.importStudents(file).subscribe({
+        next: () => {
+          this.showMsg('Import Successful', 'Students have been imported successfully!', false);
+          this.loadStudents();
+          event.target.value = '';
+        },
+        error: () => {
+          this.showMsg('Import Failed', 'Please ensure the file is a valid CSV and usernames are unique.', true);
+          event.target.value = '';
+        }
+      });
+    }
+  }
+
+  showMsg(title: string, message: string, isError: boolean): void {
+    this.messageTitle = title;
+    this.messageBody = message;
+    this.isMessageError = isError;
+    this.showMessageModal = true;
+  }
+
+  closeMessageModal(): void {
+    this.showMessageModal = false;
+  }
+
   openCreateModal(): void {
     this.isEditMode = false;
     this.selectedStudent = { username: '', level: Level.SEPTIEME };
@@ -88,9 +137,6 @@ export class StudentListComponent implements OnInit {
     this.loadStudents();
   }
 
-  // --- Delete Modal Logic (UPDATED) ---
-
-  // 1. User clicks trash icon -> Open Modal
   deleteStudent(id: number | undefined): void {
     if (id) {
       this.studentIdToDelete = id;
@@ -98,7 +144,6 @@ export class StudentListComponent implements OnInit {
     }
   }
 
-  // 2. User clicks "Confirm" in Modal -> Call API
   confirmDelete(): void {
     if (this.studentIdToDelete) {
       this.studentService.deleteStudent(this.studentIdToDelete).subscribe(() => {
@@ -108,13 +153,12 @@ export class StudentListComponent implements OnInit {
     }
   }
 
-  // 3. Close modal and reset ID
   closeDeleteModal(): void {
     this.showDeleteModal = false;
     this.studentIdToDelete = null;
   }
 
-  // --- Search & Filter ---
+  // --- Search/Filter/Nav ---
   onSearch(): void {
     this.currentPage = 0;
     this.selectedLevel = '';

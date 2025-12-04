@@ -4,6 +4,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import tn.school.management.dto.StudentDto;
 import tn.school.management.entity.Level;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.InputStream;
+
+
 
 public interface StudentService {
     
@@ -20,4 +24,9 @@ public interface StudentService {
     Page<StudentDto> searchStudents(String username, Pageable pageable);
     
     Page<StudentDto> filterStudentsByLevel(Level level, Pageable pageable);
+
+    InputStream exportStudents();
+
+    void importStudents(MultipartFile file);
+
 }
