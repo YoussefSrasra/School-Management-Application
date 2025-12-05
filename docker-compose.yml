@@ -1,0 +1,50 @@
+services:
+  # 1. Database Service
+  db:
+    image: mysql:8.0
+    container_name: school_db
+    restart: always
+    environment:
+      # You changed this to 'school_management', which is fine!
+      MYSQL_DATABASE: school_management
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    # CRITICAL: This fixes the "Link Failure" error
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Backend Service
+  backend:
+    build: ./Backend
+    container_name: school_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy # Waits for the healthcheck above
+    environment:
+      - DB_URL=jdbc:mysql://db:3306/school_management?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+
+  # 3. Frontend Service
+  frontend:
+    # Changed to lowercase 'frontend' to match standard angular folder name
+    build: ./frontend
+    container_name: school_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
